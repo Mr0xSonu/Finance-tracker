@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Reports | Personal Finance Tracker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/report.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="report-container">
+
+    <!-- PAGE HEADER -->
+    <div class="report-header">
+
+        <div>
+            <span class="section-label">FINANCIAL INSIGHTS</span>
+
+            <h1>Reports & Analytics</h1>
+
+            <p>
+                Understand your financial performance with detailed reports.
+            </p>
+        </div>
+
+        <div class="header-actions">
+
+            <a href="{{ url_for(
+                'report',
+                report_type=report_type,
+                month=month_param,
+                year=year_param,
+                export='pdf'
+            ) }}" class="btn-pdf">
+
+                <i class="bi bi-file-earmark-pdf"></i>
+                Download PDF
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- REPORT FILTER -->
+    <div class="report-filter">
+
+        <div class="filter-heading">
+            <div>
+                <h3>Generate Report</h3>
+                <p>Select your preferred reporting period.</p>
+            </div>
+
+            <i class="bi bi-sliders"></i>
+        </div>
+
+        <form action="{{ url_for('report') }}"
+              method="GET"
+              id="reportFilterForm">
+
+            <div class="filter-grid">
+
+                <div class="form-group">
+
+                    <label for="report_type">
+                        Report Type
+                    </label>
+
+                    <select name="report_type"
+                            id="report_type">
+
+                        <option value="monthly"
+                            {% if report_type == 'monthly' %}selected{% endif %}>
+                            Monthly Report
+                        </option>
+
+                        <option value="yearly"
+                            {% if report_type == 'yearly' %}selected{% endif %}>
+                            Yearly Report
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group"
+                     id="monthInputContainer">
+
+                    <label for="month">
+                        Select Month
+                    </label>
+
+                    <input type="month"
+                           name="month"
+                           id="month"
+                           value="{{ month_param }}">
+
+                </div>
+
+
+                <div class="form-group"
+                     id="yearInputContainer">
+
+                    <label for="year">
+                        Select Year
+                    </label>
+
+                    <select name="year" id="year">
+
+                        {% for yr in available_years %}
+
+                        <option value="{{ yr }}"
+                            {% if yr == year_param %}selected{% endif %}>
+
+                            {{ yr }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group filter-button">
+
+                    <button type="submit">
+                        <i class="bi bi-bar-chart-line"></i>
+                        Generate Report
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- REPORT PERIOD -->
+    <div class="period-information">
+
+        <div>
+            <i class="bi bi-calendar-check"></i>
+
+            <span>
+                Showing report for
+
+                <strong id="periodLabel">
+                    {% if report_type == 'monthly' %}
+                        {{ month_param }}
+                    {% else %}
+                        {{ year_param }}
+                    {% endif %}
+                </strong>
+            </span>
+        </div>
+
+        <span class="live-badge">
+            <span></span>
+            Report Generated
+        </span>
+
+    </div>
+
+
+    <!-- SUMMARY CARDS -->
+    <div class="summary-grid">
+
+        <div class="summary-card income-card">
+
+            <div class="summary-top">
+                <span>Total Income</span>
+
+                <div class="summary-icon">
+                    <i class="bi bi-arrow-down-left"></i>
+                </div>
+            </div>
+
+            <h2>{{ period_income | currency }}</h2>
+
+            <p>
+                <i class="bi bi-wallet2"></i>
+                Total money received
+            </p>
+
+        </div>
+
+
+        <div class="summary-card expense-card">
+
+            <div class="summary-top">
+                <span>Total Expenses</span>
+
+                <div class="summary-icon">
+                    <i class="bi bi-arrow-up-right"></i>
+                </div>
+            </div>
+
+            <h2>{{ period_expense | currency }}</h2>
+
+            <p>
+                <i class="bi bi-credit-card"></i>
+                Total money spent
+            </p>
+
+        </div>
+
+
+        <div class="summary-card savings-card">
+
+            <div class="summary-top">
+                <span>Net Savings</span>
+
+                <div class="summary-icon">
+                    <i class="bi bi-piggy-bank"></i>
+                </div>
+            </div>
+
+            <h2 class="{% if period_savings >= 0 %}positive{% else %}negative{% endif %}">
+                {{ period_savings | currency }}
+            </h2>
+
+            <p>
+                <i class="bi bi-graph-up-arrow"></i>
+                Income minus expenses
+            </p>
+
+        </div>
+
+
+        <div class="summary-card rate-card">
+
+            <div class="summary-top">
+                <span>Savings Rate</span>
+
+                <div class="summary-icon">
+                    <i class="bi bi-percent"></i>
+                </div>
+            </div>
+
+            <h2>{{ "%.2f"|format(savings_rate) }}%</h2>
+
+            <p>
+                <i class="bi bi-speedometer2"></i>
+                Percentage of income saved
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- CHART SECTION -->
+    <div class="charts-grid">
+
+        <!-- EXPENSE CHART -->
+        <div class="report-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h3>Expense Distribution</h3>
+                    <p>Category-wise spending breakdown</p>
+                </div>
+
+                <i class="bi bi-pie-chart"></i>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="reportCategoryChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- INCOME VS EXPENSE -->
+        <div class="report-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h3>Cash Flow Analysis</h3>
+                    <p>Income compared with expenses</p>
+                </div>
+
+                <i class="bi bi-bar-chart"></i>
+
+            </div>
+
+            <div class="chart-wrapper">
+
+                <canvas id="reportFlowChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CATEGORY BREAKDOWN -->
+    <div class="category-grid">
+
+        <!-- EXPENSE CATEGORIES -->
+        <div class="report-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h3>Expense Categories</h3>
+                    <p>Where your money is going</p>
+                </div>
+
+            </div>
+
+            <div class="category-list">
+
+                {% if expense_categories %}
+
+                    {% for category, amount in expense_categories %}
+
+                    <div class="category-row">
+
+                        <div class="category-name">
+                            <span class="category-dot expense-dot"></span>
+                            {{ category }}
+                        </div>
+
+                        <strong>{{ amount | currency }}</strong>
+
+                    </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="empty-message">
+                        No expense records found.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- INCOME CATEGORIES -->
+        <div class="report-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h3>Income Categories</h3>
+                    <p>Where your money comes from</p>
+                </div>
+
+            </div>
+
+            <div class="category-list">
+
+                {% if income_categories %}
+
+                    {% for category, amount in income_categories %}
+
+                    <div class="category-row">
+
+                        <div class="category-name">
+                            <span class="category-dot income-dot"></span>
+                            {{ category }}
+                        </div>
+
+                        <strong>{{ amount | currency }}</strong>
+
+                    </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="empty-message">
+                        No income records found.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TRANSACTION STATEMENT -->
+    <div class="report-panel transaction-panel">
+
+        <div class="panel-header">
+
+            <div>
+                <h3>Transaction Statement</h3>
+
+                <p>
+                    {{ transactions | length }}
+                    transactions found in this period.
+                </p>
+            </div>
+
+            <i class="bi bi-receipt"></i>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="report-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th class="amount-column">Amount</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% if transactions %}
+
+                        {% for txn in transactions %}
+
+                        <tr>
+
+                            <td>
+                                {{ txn.date.strftime('%d %b %Y') }}
+                            </td>
+
+                            <td>
+
+                                {% if txn.type == 'income' %}
+
+                                <span class="transaction-badge income-badge">
+                                    Income
+                                </span>
+
+                                {% else %}
+
+                                <span class="transaction-badge expense-badge">
+                                    Expense
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>{{ txn.category }}</td>
+
+                            <td>
+                                {{ txn.description or '-' }}
+                            </td>
+
+                            <td class="amount-column
+                                {% if txn.type == 'income' %}
+                                    positive
+                                {% else %}
+                                    negative
+                                {% endif %}">
+
+                                {% if txn.type == 'income' %}+{% else %}-{% endif %}
+                                {{ txn.amount | currency }}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <tr>
+
+                            <td colspan="5" class="empty-table">
+                                <i class="bi bi-calendar-x"></i>
+
+                                <p>
+                                    No transactions found for this period.
+                                </p>
+                            </td>
+
+                        </tr>
+
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- PDF DOWNLOAD BANNER -->
+    <div class="download-banner">
+
+        <div class="download-content">
+
+            <div class="download-icon">
+                <i class="bi bi-file-earmark-pdf"></i>
+            </div>
+
+            <div>
+                <h3>Your financial report is ready</h3>
+
+                <p>
+                    Download your complete report with summaries,
+                    category breakdowns, charts and transactions.
+                </p>
+            </div>
+
+        </div>
+
+
+        <a href="{{ url_for(
+            'report',
+            report_type=report_type,
+            month=month_param,
+            year=year_param,
+            export='pdf'
+        ) }}" class="download-button">
+
+            <i class="bi bi-download"></i>
+            Download PDF
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- CHART DATA -->
+<script type="application/json" id="report-data">
+    {{ report_chart_data | tojson }}
+</script>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="{{ url_for('static', filename='js/report.js') }}"></script>
+
+{% endblock %}

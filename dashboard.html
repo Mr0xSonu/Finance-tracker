@@ -1,0 +1,1207 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Personal Finance Tracker{% endblock %}
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto space-y-8 pb-12">
+
+    <!-- HEADER -->
+    <header class="flex flex-col md:flex-row md:items-center
+                   md:justify-between gap-5">
+
+        <div>
+            <p class="text-xs tracking-[3px] font-semibold text-indigo-400">
+                PERSONAL FINANCE TRACKER
+            </p>
+
+            <h1 class="text-3xl md:text-4xl font-bold text-white mt-3">
+                Welcome back, {{ current_user.username }}
+            </h1>
+
+            <p class="text-slate-400 mt-2">
+                Manage your money. Track your progress.
+            </p>
+        </div>
+
+        <div class="flex gap-3">
+
+            <a href="{{ url_for('change_password') }}"
+               class="px-4 py-3 rounded-xl border border-slate-700
+                      text-slate-300 hover:bg-slate-800 transition">
+                Settings
+            </a>
+
+            <a href="{{ url_for('logout') }}"
+               class="px-4 py-3 rounded-xl bg-rose-500/10
+                      text-rose-400 hover:bg-rose-500/20 transition">
+                Logout
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+
+                <div class="rounded-xl border p-4
+                    {% if category == 'success' %}
+                        bg-emerald-500/10 border-emerald-500/30 text-emerald-300
+                    {% else %}
+                        bg-rose-500/10 border-rose-500/30 text-rose-300
+                    {% endif %}">
+
+                    {{ message }}
+
+                </div>
+
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
+    <!-- ACCOUNT INFORMATION -->
+    <section class="rounded-3xl border border-slate-800
+                    bg-slate-900 p-6">
+
+        <div class="flex items-center gap-4">
+
+            <div class="w-14 h-14 rounded-2xl bg-indigo-500/20
+                        flex items-center justify-center text-2xl">
+                👤
+            </div>
+
+            <div>
+                <h2 class="text-lg font-semibold text-white">
+                    {{ current_user.username }}
+                </h2>
+
+                <p class="text-sm text-slate-400">
+                    {{ current_user.email }}
+                </p>
+
+                <p class="text-xs text-emerald-400 mt-1">
+                    ● Account Active
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FINANCIAL OVERVIEW -->
+    <section>
+
+        <div class="flex justify-between items-center mb-5">
+
+            <div>
+                <h2 class="text-xl font-bold text-white">
+                    Financial Overview
+                </h2>
+
+                <p class="text-sm text-slate-400 mt-1">
+                    Your financial summary at a glance.
+                </p>
+            </div>
+
+            <span class="text-xs text-slate-500">
+                All Time
+            </span>
+
+        </div>
+
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            <!-- TOTAL BALANCE -->
+            <div class="rounded-2xl border border-indigo-500/20
+                        bg-indigo-500/5 p-6">
+
+                <div class="flex justify-between">
+                    <p class="text-sm text-slate-400">
+                        Total Balance
+                    </p>
+                    <span class="text-2xl">💰</span>
+                </div>
+
+                <h3 class="text-3xl font-bold text-white mt-5">
+                    ₹{{ "{:,.2f}".format(total_balance) }}
+                </h3>
+
+                <p class="text-xs text-slate-500 mt-3">
+                    Income minus expenses
+                </p>
+
+            </div>
+
+
+            <!-- TOTAL INCOME -->
+            <div class="rounded-2xl border border-emerald-500/20
+                        bg-emerald-500/5 p-6">
+
+                <div class="flex justify-between">
+                    <p class="text-sm text-slate-400">
+                        Total Income
+                    </p>
+                    <span class="text-2xl">📈</span>
+                </div>
+
+                <h3 class="text-3xl font-bold text-emerald-400 mt-5">
+                    ₹{{ "{:,.2f}".format(total_income) }}
+                </h3>
+
+                <p class="text-xs text-slate-500 mt-3">
+                    Total money received
+                </p>
+
+            </div>
+
+
+            <!-- TOTAL EXPENSES -->
+            <div class="rounded-2xl border border-rose-500/20
+                        bg-rose-500/5 p-6">
+
+                <div class="flex justify-between">
+                    <p class="text-sm text-slate-400">
+                        Total Expenses
+                    </p>
+                    <span class="text-2xl">📉</span>
+                </div>
+
+                <h3 class="text-3xl font-bold text-rose-400 mt-5">
+                    ₹{{ "{:,.2f}".format(total_expenses) }}
+                </h3>
+
+                <p class="text-xs text-slate-500 mt-3">
+                    Total money spent
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- QUICK ACTIONS -->
+    <section>
+
+        <h2 class="text-xl font-bold text-white mb-5">
+            Quick Actions
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+
+            <!-- ADD INCOME -->
+            <div class="rounded-2xl border border-slate-800
+                        bg-slate-900 p-6 hover:border-emerald-500/40
+                        transition">
+
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10
+                            flex items-center justify-center text-2xl">
+                    +
+                </div>
+
+                <h3 class="text-lg font-semibold text-white mt-5">
+                    Add Income
+                </h3>
+
+                <p class="text-sm text-slate-400 mt-2">
+                    Record salary, business income, freelancing
+                    and other earnings.
+                </p>
+
+                <button onclick="openIncomeModal()"
+                        class="mt-5 px-5 py-3 rounded-xl
+                               bg-emerald-600 text-white font-medium
+                               hover:bg-emerald-700 transition">
+
+                    + Add Income
+
+                </button>
+
+            </div>
+
+
+            <!-- ADD EXPENSE -->
+            <div class="rounded-2xl border border-slate-800
+                        bg-slate-900 p-6 hover:border-rose-500/40
+                        transition">
+
+                <div class="w-12 h-12 rounded-xl bg-rose-500/10
+                            flex items-center justify-center text-2xl">
+                    −
+                </div>
+
+                <h3 class="text-lg font-semibold text-white mt-5">
+                    Add Expense
+                </h3>
+
+                <p class="text-sm text-slate-400 mt-2">
+                    Record your daily spending, bills,
+                    shopping and other expenses.
+                </p>
+
+                <button onclick="openAddModal()"
+                        class="mt-5 px-5 py-3 rounded-xl
+                               bg-rose-600 text-white font-medium
+                               hover:bg-rose-700 transition">
+
+                    + Add Expense
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- RECENT TRANSACTIONS -->
+    <section class="rounded-2xl border border-slate-800
+                    bg-slate-900 overflow-hidden">
+
+        <div class="p-6 border-b border-slate-800">
+
+            <div class="flex flex-col lg:flex-row
+                        lg:items-center lg:justify-between gap-4">
+
+                <div>
+                    <h2 class="text-xl font-bold text-white">
+                        Recent Transactions
+                    </h2>
+
+                    <p class="text-sm text-slate-400 mt-1">
+                        All your income and expenses in one place.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+
+                    <input type="text"
+                           id="searchTransaction"
+                           placeholder="Search transactions..."
+                           class="bg-slate-800 border border-slate-700
+                                  rounded-xl px-4 py-2.5 text-sm
+                                  text-white outline-none
+                                  focus:border-indigo-500">
+
+                    <select id="typeFilter"
+                            class="bg-slate-800 border border-slate-700
+                                   rounded-xl px-4 py-2.5 text-sm
+                                   text-white outline-none">
+
+                        <option value="">All Transactions</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+
+                    </select>
+
+                    <select id="categoryFilter"
+                            class="bg-slate-800 border border-slate-700
+                                   rounded-xl px-4 py-2.5 text-sm
+                                   text-white outline-none">
+
+                        <option value="">All Categories</option>
+
+                        <option value="Salary">Salary</option>
+                        <option value="Business">Business</option>
+                        <option value="Freelancing">Freelancing</option>
+                        <option value="Investment">Investment</option>
+                        <option value="Gift">Gift</option>
+
+                        <option value="Food">Food</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Education">Education</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Health">Health</option>
+                        <option value="Other">Other</option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TRANSACTION TABLE -->
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-left">
+
+                <thead class="bg-slate-800/50 text-xs
+                               uppercase tracking-wider text-slate-400">
+
+                    <tr>
+
+                        <th class="px-6 py-4">Transaction</th>
+
+                        <th class="px-6 py-4">Category</th>
+
+                        <th class="px-6 py-4">Date</th>
+
+                        <th class="px-6 py-4">Type</th>
+
+                        <th class="px-6 py-4">Amount</th>
+
+                        <th class="px-6 py-4 text-right">Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="transactionTable"
+                       class="divide-y divide-slate-800">
+
+
+                    <!-- INCOME ROWS -->
+                    {% for income in incomes %}
+
+                    <tr class="transaction-row hover:bg-slate-800/40 transition"
+                        data-description="{{ income.description or '' }}"
+                        data-category="{{ income.category }}"
+                        data-type="income">
+
+                        <td class="px-6 py-4">
+
+                            <p class="font-medium text-white">
+                                {{ income.description or 'Income' }}
+                            </p>
+
+                            <p class="text-xs text-slate-500 mt-1">
+                                Transaction #{{ income.id }}
+                            </p>
+
+                        </td>
+
+
+                        <td class="px-6 py-4">
+
+                            <span class="px-3 py-1 rounded-full
+                                         text-xs bg-indigo-500/10
+                                         text-indigo-300">
+
+                                {{ income.category }}
+
+                            </span>
+
+                        </td>
+
+
+                        <td class="px-6 py-4 text-sm text-slate-400">
+
+                            {{ income.date.strftime('%d %b %Y') }}
+
+                        </td>
+
+
+                        <td class="px-6 py-4">
+
+                            <span class="text-xs px-3 py-1 rounded-full
+                                         bg-emerald-500/10 text-emerald-400">
+
+                                Income
+
+                            </span>
+
+                        </td>
+
+
+                        <td class="px-6 py-4 font-semibold text-emerald-400">
+
+                            + ₹{{ "{:,.2f}".format(income.amount) }}
+
+                        </td>
+
+
+                        <td class="px-6 py-4 text-right text-slate-500">
+
+                            —
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+
+                    <!-- EXPENSE ROWS -->
+                    {% for expense in expenses %}
+
+                    <tr class="transaction-row hover:bg-slate-800/40 transition"
+                        data-description="{{ expense.description or '' }}"
+                        data-category="{{ expense.category }}"
+                        data-type="expense">
+
+                        <td class="px-6 py-4">
+
+                            <p class="font-medium text-white">
+                                {{ expense.description or 'Expense' }}
+                            </p>
+
+                            <p class="text-xs text-slate-500 mt-1">
+                                Transaction #{{ expense.id }}
+                            </p>
+
+                        </td>
+
+
+                        <td class="px-6 py-4">
+
+                            <span class="px-3 py-1 rounded-full
+                                         text-xs bg-indigo-500/10
+                                         text-indigo-300">
+
+                                {{ expense.category }}
+
+                            </span>
+
+                        </td>
+
+
+                        <td class="px-6 py-4 text-sm text-slate-400">
+
+                            {{ expense.date.strftime('%d %b %Y') }}
+
+                        </td>
+
+
+                        <td class="px-6 py-4">
+
+                            <span class="text-xs px-3 py-1 rounded-full
+                                         bg-rose-500/10 text-rose-400">
+
+                                Expense
+
+                            </span>
+
+                        </td>
+
+
+                        <td class="px-6 py-4 font-semibold text-rose-400">
+
+                            - ₹{{ "{:,.2f}".format(expense.amount) }}
+
+                        </td>
+
+
+                        <td class="px-6 py-4">
+
+                            <div class="flex justify-end gap-2">
+
+                                <button
+                                    type="button"
+                                    class="edit-expense px-3 py-2 rounded-lg
+                                           bg-indigo-500/10 text-indigo-300
+                                           hover:bg-indigo-500/20 text-sm"
+
+                                    data-id="{{ expense.id }}"
+                                    data-amount="{{ expense.amount }}"
+                                    data-category="{{ expense.category }}"
+                                    data-description="{{ expense.description or '' }}"
+                                    data-date="{{ expense.date.strftime('%Y-%m-%d') }}">
+
+                                    Edit
+
+                                </button>
+
+
+                                <form method="POST"
+                                      action="{{ url_for('delete_expense', expense_id=expense.id) }}"
+                                      onsubmit="return confirm('Delete this expense?')">
+
+                                    <button type="submit"
+                                            class="px-3 py-2 rounded-lg
+                                                   bg-rose-500/10 text-rose-400
+                                                   hover:bg-rose-500/20 text-sm">
+
+                                        Delete
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+
+                    <!-- EMPTY STATE -->
+                    {% if not expenses and not incomes %}
+
+                    <tr id="emptyState">
+
+                        <td colspan="6" class="text-center py-16">
+
+                            <div class="text-4xl mb-4">📊</div>
+
+                            <h3 class="text-white font-semibold">
+                                No transactions yet
+                            </h3>
+
+                            <p class="text-sm text-slate-400 mt-2">
+                                Add your first income or expense
+                                to get started.
+                            </p>
+
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
+
+
+                    <tr id="noSearchResults" class="hidden">
+
+                        <td colspan="6"
+                            class="text-center py-10 text-slate-400">
+
+                            No matching transactions found.
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- SECURITY -->
+    <section class="rounded-2xl border border-indigo-500/20
+                    bg-indigo-500/5 p-6">
+
+        <h3 class="font-semibold text-indigo-300">
+            🔒 Account Security
+        </h3>
+
+        <p class="text-sm text-slate-400 mt-2">
+            Your account is protected with password hashing
+            and login authentication.
+        </p>
+
+        <a href="{{ url_for('change_password') }}"
+           class="inline-block text-sm text-indigo-400 mt-4
+                  hover:text-indigo-300">
+
+            Manage Account Security →
+
+        </a>
+
+    </section>
+
+</div>
+
+
+
+<!-- ===================================== -->
+<!-- ADD EXPENSE MODAL -->
+<!-- ===================================== -->
+
+<div id="expenseModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center
+            bg-black/70 backdrop-blur-sm p-4">
+
+    <div class="w-full max-w-lg rounded-2xl border border-slate-700
+                bg-slate-900 p-6 shadow-2xl">
+
+        <div class="flex justify-between items-center mb-6">
+
+            <div>
+                <h2 id="expenseModalTitle"
+                    class="text-xl font-bold text-white">
+
+                    Add New Expense
+
+                </h2>
+
+                <p class="text-sm text-slate-400 mt-1">
+                    Enter your expense details.
+                </p>
+            </div>
+
+            <button onclick="closeExpenseModal()"
+                    class="text-slate-400 hover:text-white text-2xl">
+
+                &times;
+
+            </button>
+
+        </div>
+
+
+        <form id="expenseForm"
+              method="POST"
+              action="{{ url_for('add_expense') }}"
+              class="space-y-5">
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Amount (₹)
+                </label>
+
+                <input type="number"
+                       name="amount"
+                       id="expenseAmount"
+                       min="0.01"
+                       max="100000000"
+                       step="0.01"
+                       required
+                       placeholder="Enter amount"
+                       class="form-input">
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Category
+                </label>
+
+                <select name="category"
+                        id="expenseCategory"
+                        required
+                        class="form-input">
+
+                    <option value="">Select Category</option>
+                    <option value="Food">Food</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Education">Education</option>
+                    <option value="Bills">Bills</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Health">Health</option>
+                    <option value="Other">Other</option>
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Description
+                </label>
+
+                <input type="text"
+                       name="description"
+                       id="expenseDescription"
+                       maxlength="255"
+                       placeholder="e.g. Grocery shopping"
+                       class="form-input">
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Date
+                </label>
+
+                <input type="date"
+                       name="date"
+                       id="expenseDate"
+                       required
+                       class="form-input">
+
+            </div>
+
+
+            <div class="flex gap-3 pt-3">
+
+                <button type="button"
+                        onclick="closeExpenseModal()"
+                        class="flex-1 rounded-xl border border-slate-700
+                               px-4 py-3 text-slate-300 hover:bg-slate-800">
+
+                    Cancel
+
+                </button>
+
+                <button type="submit"
+                        id="expenseSubmitButton"
+                        class="flex-1 rounded-xl bg-rose-600
+                               px-4 py-3 font-semibold text-white
+                               hover:bg-rose-700">
+
+                    Save Expense
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===================================== -->
+<!-- ADD INCOME MODAL -->
+<!-- ===================================== -->
+
+<div id="incomeModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center
+            bg-black/70 backdrop-blur-sm p-4">
+
+    <div class="w-full max-w-lg rounded-2xl border border-slate-700
+                bg-slate-900 p-6 shadow-2xl">
+
+        <div class="flex justify-between items-center mb-6">
+
+            <div>
+                <h2 class="text-xl font-bold text-white">
+                    Add New Income
+                </h2>
+
+                <p class="text-sm text-slate-400 mt-1">
+                    Enter your income details.
+                </p>
+            </div>
+
+            <button onclick="closeIncomeModal()"
+                    class="text-slate-400 hover:text-white text-2xl">
+
+                &times;
+
+            </button>
+
+        </div>
+
+
+        <form method="POST"
+              action="{{ url_for('add_income') }}"
+              class="space-y-5">
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Income Amount (₹)
+                </label>
+
+                <input type="number"
+                       name="amount"
+                       min="0.01"
+                       max="100000000"
+                       step="0.01"
+                       required
+                       placeholder="Enter income amount"
+                       class="form-input">
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Income Category
+                </label>
+
+                <select name="category"
+                        required
+                        class="form-input">
+
+                    <option value="">Select Category</option>
+                    <option value="Salary">Salary</option>
+                    <option value="Business">Business</option>
+                    <option value="Freelancing">Freelancing</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Gift">Gift</option>
+                    <option value="Other">Other</option>
+
+                </select>
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Description
+                </label>
+
+                <input type="text"
+                       name="description"
+                       maxlength="255"
+                       placeholder="e.g. Monthly salary"
+                       class="form-input">
+
+            </div>
+
+
+            <div>
+
+                <label class="block text-sm text-slate-300 mb-2">
+                    Date
+                </label>
+
+                <input type="date"
+                       name="date"
+                       id="incomeDate"
+                       required
+                       class="form-input">
+
+            </div>
+
+
+            <div class="flex gap-3 pt-3">
+
+                <button type="button"
+                        onclick="closeIncomeModal()"
+                        class="flex-1 rounded-xl border border-slate-700
+                               px-4 py-3 text-slate-300 hover:bg-slate-800">
+
+                    Cancel
+
+                </button>
+
+                <button type="submit"
+                        class="flex-1 rounded-xl bg-emerald-600
+                               px-4 py-3 font-semibold text-white
+                               hover:bg-emerald-700">
+
+                    Save Income
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================== -->
+
+<style>
+
+.form-input {
+    width: 100%;
+    border-radius: 12px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    padding: 12px 16px;
+    color: white;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #6366f1;
+}
+
+</style>
+
+
+<script>
+
+// ===================================
+// DATE FUNCTION
+// ===================================
+
+function getTodayDate() {
+
+    const now = new Date();
+
+    const year = now.getFullYear();
+
+    const month = String(
+        now.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+        now.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+
+}
+
+
+// ===================================
+// EXPENSE MODAL
+// ===================================
+
+const expenseModal =
+    document.getElementById("expenseModal");
+
+const expenseForm =
+    document.getElementById("expenseForm");
+
+
+function openAddModal() {
+
+    expenseForm.reset();
+
+    expenseForm.action =
+        "{{ url_for('add_expense') }}";
+
+    document.getElementById("expenseModalTitle").textContent =
+        "Add New Expense";
+
+    document.getElementById("expenseSubmitButton").textContent =
+        "Save Expense";
+
+    document.getElementById("expenseDate").value =
+        getTodayDate();
+
+    expenseModal.classList.remove("hidden");
+    expenseModal.classList.add("flex");
+
+}
+
+
+function closeExpenseModal() {
+
+    expenseModal.classList.add("hidden");
+    expenseModal.classList.remove("flex");
+
+}
+
+
+// ===================================
+// EDIT EXPENSE
+// ===================================
+
+document.querySelectorAll(".edit-expense").forEach(button => {
+
+    button.addEventListener("click", function() {
+
+        const id = this.dataset.id;
+
+        document.getElementById("expenseAmount").value =
+            this.dataset.amount;
+
+        document.getElementById("expenseCategory").value =
+            this.dataset.category;
+
+        document.getElementById("expenseDescription").value =
+            this.dataset.description;
+
+        document.getElementById("expenseDate").value =
+            this.dataset.date;
+
+
+        expenseForm.action =
+            `/expense/${id}/edit`;
+
+        document.getElementById("expenseModalTitle").textContent =
+            "Edit Expense";
+
+        document.getElementById("expenseSubmitButton").textContent =
+            "Update Expense";
+
+
+        expenseModal.classList.remove("hidden");
+        expenseModal.classList.add("flex");
+
+    });
+
+});
+
+
+// ===================================
+// INCOME MODAL
+// ===================================
+
+const incomeModal =
+    document.getElementById("incomeModal");
+
+
+function openIncomeModal() {
+
+    incomeModal.querySelector("form").reset();
+
+    document.getElementById("incomeDate").value =
+        getTodayDate();
+
+    incomeModal.classList.remove("hidden");
+    incomeModal.classList.add("flex");
+
+}
+
+
+function closeIncomeModal() {
+
+    incomeModal.classList.add("hidden");
+    incomeModal.classList.remove("flex");
+
+}
+
+
+// ===================================
+// OUTSIDE CLICK TO CLOSE
+// ===================================
+
+[expenseModal, incomeModal].forEach(modal => {
+
+    modal.addEventListener("click", function(event) {
+
+        if (event.target === modal) {
+
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+
+        }
+
+    });
+
+});
+
+
+// ===================================
+// ESCAPE KEY
+// ===================================
+
+document.addEventListener("keydown", function(event) {
+
+    if (event.key === "Escape") {
+
+        closeExpenseModal();
+
+        closeIncomeModal();
+
+    }
+
+});
+
+
+// ===================================
+// SEARCH AND FILTER
+// ===================================
+
+const searchInput =
+    document.getElementById("searchTransaction");
+
+const typeFilter =
+    document.getElementById("typeFilter");
+
+const categoryFilter =
+    document.getElementById("categoryFilter");
+
+
+function filterTransactions() {
+
+    const searchText =
+        searchInput.value.toLowerCase();
+
+    const selectedType =
+        typeFilter.value;
+
+    const selectedCategory =
+        categoryFilter.value;
+
+    const rows =
+        document.querySelectorAll(".transaction-row");
+
+    let visibleCount = 0;
+
+
+    rows.forEach(row => {
+
+        const description =
+            row.dataset.description.toLowerCase();
+
+        const category =
+            row.dataset.category;
+
+        const type =
+            row.dataset.type;
+
+
+        const matchesSearch =
+            description.includes(searchText) ||
+            category.toLowerCase().includes(searchText);
+
+        const matchesType =
+            selectedType === "" ||
+            selectedType === type;
+
+        const matchesCategory =
+            selectedCategory === "" ||
+            selectedCategory === category;
+
+
+        if (
+            matchesSearch &&
+            matchesType &&
+            matchesCategory
+        ) {
+
+            row.style.display = "";
+
+            visibleCount++;
+
+        } else {
+
+            row.style.display = "none";
+
+        }
+
+    });
+
+
+    const noResults =
+        document.getElementById("noSearchResults");
+
+    if (noResults) {
+
+        noResults.classList.toggle(
+            "hidden",
+            visibleCount !== 0
+        );
+
+    }
+
+}
+
+
+searchInput.addEventListener(
+    "input",
+    filterTransactions
+);
+
+typeFilter.addEventListener(
+    "change",
+    filterTransactions
+);
+
+categoryFilter.addEventListener(
+    "change",
+    filterTransactions
+);
+
+</script>
+
+{% endblock %}
